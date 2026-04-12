@@ -484,3 +484,37 @@ Always mention:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import glob
+
+# Create an empty string to hold all the combined text
+combined_text = ""
+
+# Find all files ending in .txt in the current folder
+for file_name in glob.glob("*.txt"):
+    with open(file_name, 'r', encoding='utf-8') as file:
+        # Optional: Add the file name as a header so the model knows which file it's reading
+        combined_text += f"\n\n--- {file_name} ---\n"
+        # Add the actual text from the file
+        combined_text += file.read()
+
+# Now 'combined_text' holds everything! 
+# You can pass this variable into your Ollama prompt.
+
+# (Optional) Print the first 200 characters just to test it's working:
+print("Files loaded successfully! Preview:")
+print(combined_text[:200])
+
