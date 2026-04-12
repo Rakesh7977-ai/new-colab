@@ -178,4 +178,110 @@ if not data.empty:
 
 cd ~/path/to/your/training_models
 source venv/bin/activate
-streamlit run dashboard.py
+streamlit run dashboard
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import streamlit as st
+import ollama
+import yfinance as yf
+import plotly.graph_objects as go
+import glob
+
+# --- 1. PAGE CONFIGURATION (Must be the very first Streamlit command) ---
+st.set_page_config(layout="wide", page_title="AI Stock Terminal")
+
+# --- 2. DATA LOADERS ---
+def get_local_context():
+    context = ""
+    # Find all .txt files in the current folder
+    for file_name in glob.glob("*.txt"):
+        try:
+            with open(file_name, 'r', encoding='utf-8') as f:
+                context += f"\n-- {file_name} --\n{f.read()}\n"
+        except Exception:
+            context += f"\n-- Error reading {file_name} --\n"
+    return context
+
+# --- 3. SIDEBAR & SETTINGS ---
+with st.sidebar:
+    st.header("📈 Controls")
+    ticker = st.text_input("Enter Stock Ticker", value="AAPL").upper()
+    time_period = st.selectbox("Period", ["1mo", "3mo", "6mo", "1y"])
+    analyze_btn = st.button("Run AI Analysis")
+    st.divider()
+    st.write("Reading files:", glob.glob("*.txt"))
+
+# --- 4. MAIN DASHBOARD LAYOUT ---
+st.title(f"📊 Analysis: {ticker}")
+
+col1, col2 = st.columns([2, 1])
+
+# Fetch Real Stock Data securely
+data = yf.download(ticker, period=time_period, interval="1d")
+
+with col1:
+    if not data.empty:
+        # Create a Candlestick Chart
+        fig = go.Figure(data=[go.Candlestick(
+            x=data.index,
+            open=data['Open'],
+            high=data['High'],
+            low=data['Low'],
+            close=data['Close']
+        )])
+        fig.update_layout(template="plotly_dark", title=f"{ticker} Price Action")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        # Prevents crashing if you type a fake ticker
+        st.error(f"Could not find market data for ticker: {ticker}. Please check the symbol.")
+
+with col2:
+    st.subheader("💡 AI Insights")
+    
+    if analyze_btn:
+        if data.empty:
+            st.warning("Cannot run analysis: No stock data available.")
+        else:
+            with st.spinner("Analyzing data and files..."):
+                try:
+                    local_files = get_local_context()
+                    
+                    # Safely get the most recent closing price as a pure number
+                    # .dropna() prevents errors if there are empty days in the market data
+                    current_price = float(data['Close'].dropna().iloc[-1])
+                    
+                    # The Prompt: Combine Live Data + Your Local Rules/Files
+                    prompt = f"""
+                    You are a senior stock analyst. 
+                    LIVE DATA: {ticker} is currently at ${current_price:.2f}.
+                    LOCAL RESEARCH: {local_files}
+                    
+                    Based on the 'answer_style.txt' rules and the data provided, 
+                    give a brief Technical and Fundamental summary for {ticker}.
+                    """
+                    
+                    # Call the tiny model
+                    response = ollama.generate(model='qwen2.5:0.5b', prompt=prompt)
+                    st.info(response['response'])
+                    
+                except Exception as e
+                
