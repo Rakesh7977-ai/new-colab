@@ -20,6 +20,15 @@ html_template = """
     .section-title { color: #004080; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; font-size: 16px; }
     .chart-img { width: 100%; margin-top: 20px; border: 1px solid #eee; }
 </style></head>
+
+
+
+
+
+
+
+
+  
 <body>
     <div class="header">
         <div class="title">Equity Research Report</div>
@@ -321,3 +330,138 @@ with tab3:
             )
             
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import matplotlib.pyplot as plt
+import ollama
+from weasyprint import HTML
+import os
+
+# --- PAGE CONFIG ---
+st.set_page_config(page_title="EFC Pro Screener", layout="wide")
+
+st.markdown("""
+<style>
+    .stApp { background-color: #f8f9fa; }
+    .stButton>button { width: 100%; border-radius: 5px; height: 3em; background-color: #004080; color: white; font-weight: bold; }
+    .metric-card { background-color: white; padding: 15px; border-radius: 10px; border-left: 5px solid #004080; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); }
+</style>
+""", unsafe_allow_html=True)
+
+st.title("🏛️ EFC (I) Limited: Institutional Research Screener")
+ticker = "543965.BO"
+
+# --- DATA ENGINE WITH ERROR HANDLING ---
+@st.cache_data
+def fetch_live_data(t):
+    try:
+        data = yf.download(t, period="1y", progress=False)
+        return data
+    except Exception:
+        return pd.DataFrame()
+
+stock_df = fetch_live_data(ticker)
+
+# Check if data is empty to prevent the Crash
+if stock_df.empty:
+    st.warning("⚠️ Market data currently unavailable. Using last known CMP for UI.")
+    current_price = 185.0  # Fallback price from your report
+else:
+    current_price = stock_df['Close'].iloc[-1]
+
+# --- SIDEBAR ---
+st.sidebar.header("Control Panel")
+target_price = st.sidebar.number_input("Target Price (INR)", value=285)
+run_audit = st.sidebar.button("🔍 Run AI Research Audit")
+
+upside = ((target_price / current_price) - 1) * 100
+
+# --- UI TABS ---
+tab1, tab2, tab3 = st.tabs(["📊 Screener Overview", "📈 Technical View", "📥 Download Report"])
+
+with tab1:
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f"<div class='metric-card'><b>Current Price</b><br><h2>₹{current_price:.2f}</h2></div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown(f"<div class='metric-card'><b>Target Price</b><br><h2>₹{target_price}</h2></div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown(f"<div class='metric-card'><b>Potential Upside</b><br><h2 style='color:green;'>+{upside:.1f}%</h2></div>", unsafe_allow_html=True)
+
+    st.divider()
+    st.subheader("Deep-Dive AI Audit (Reading from data.txt)")
+    
+    if run_audit:
+        # Check for any of your data files
+        data_file = "data.txt" if os.path.exists("data.txt") else "equity_report_data.txt"
+        
+        if os.path.exists(data_file):
+            with open(data_file, "r") as f:
+                raw_data = f.read()
+            with st.spinner("Qwen AI is auditing research files..."):
+                prompt = f"Analyze this EFC research data: {raw_data}. Provide a 'Verdict', 'Structural Moat', and 'Key Risks'."
+                response = ollama.generate(model='qwen2.5:0.5b', prompt=prompt)
+                st.session_state['ai_res'] = response['response']
+                st.info(st.session_state['ai_res'])
+        else:
+            st.error(f"Error: No data file found. Please ensure {data_file} exists in your folder.")
+
+with tab2:
+    if not stock_df.empty:
+        st.subheader("BSE Technical Price Action")
+        fig, ax = plt.subplots(figsize=(12, 4))
+        ax.plot(stock_df['Close'], color='#004080', linewidth=2)
+        ax.fill_between(stock_df.index, stock_df['Close'], color='#e6f2ff', alpha=0.5)
+        st.pyplot(fig)
+        st.dataframe(stock_df.tail(10), use_container_width=True)
+    else:
+        st.error("Cannot render charts: No market data found.")
+
+with tab3:
+    st.subheader("Generate Institutional PDF")
+    if st.button("🚀 Build PDF Report"):
+        with st.spinner("Rendering professional PDF..."):
+            # Ensure we have a chart image even if data is missing
+            if not stock_df.empty:
+                plt.savefig("temp_chart.png", bbox_inches='tight')
+            
+            summary = st.session_state.get('ai_res', "Audit not run yet.")
+            
+            html_content = f"""
+            <html><body style="font-family: sans-serif; margin: 40px;">
+                <h1 style="color: #004080;">EFC (I) LIMITED RESEARCH</h1>
+                <div style="background: #e6f2ff; padding: 15px; border-left: 5px solid #004080;">
+                    <h2>BUY | Target: INR {target_price}</h2>
+                </div>
+                <h3>AI Investment Summary</h3>
+                <p>{summary}</p>
+            </body></html>
+            """
+            HTML(string=html_content).write_pdf("EFC_Final_Report.pdf")
+            st.success("✅ PDF Built! You can now download it below.")
+
+    if os.path.exists("EFC_Final_Report.pdf"):
+        with open("EFC_Final_Report.pdf", "rb") as f:
+            st.download_button("📥 Download PDF", f, "EFC_Equity_Research.pdf", "application/pdf")
+            
