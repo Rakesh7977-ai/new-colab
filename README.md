@@ -1,98 +1,12 @@
-import streamlit as st
-import ollama
-import yfinance as yf
-import plotly.graph_objects as go
-import glob
-
-# --- 1. PAGE SETUP ---
-st.set_page_config(layout="wide", page_title="AI Stock Terminal")
-
-# --- 2. FILE LOADER ---
-def get_local_context():
-    context = ""
-    # Looks for all .txt files seen in your explorer
-    for file_name in glob.glob("*.txt"):
-        try:
-            with open(file_name, 'r', encoding='utf-8') as f:
-                context += f"\n-- {file_name} --\n{f.read()}\n"
-        except Exception:
-            continue
-    return context
-
-# --- 3. SIDEBAR ---
-with st.sidebar:
-    st.header("📈 Controls")
-    ticker = st.text_input("Enter Stock Ticker", value="NVDA").upper()
-    time_period = st.selectbox("Period", ["1mo", "3mo", "6mo", "1y"])
-    analyze_btn = st.button("Run AI Analysis")
-    st.divider()
-    st.write("Files found:", glob.glob("*.txt"))
-
-# --- 4. DATA FETCHING ---
-st.title(f"📊 Analysis: {ticker}")
-col1, col2 = st.columns([2, 1])
-
-# Fetch data and clean it immediately to avoid the 'Series' error
-data = yf.download(ticker, period=time_period, interval="1d")
-
-with col1:
-    if not data.empty:
-        fig = go.Figure(data=[go.Candlestick(
-            x=data.index,
-            open=data['Open'],
-            high=data['High'],
-            low=data['Low'],
-            close=data['Close']
-        )])
-        fig.update_layout(template="plotly_dark", title=f"{ticker} Price Action")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.error("Ticker not found or no internet connection.")
-
-with col2:
-    st.subheader("💡 AI Insights")
-    if analyze_btn and not data.empty:
-        with st.spinner("Reading files and analyzing..."):
-            try:
-                # FIX: We grab the last price and convert it to a plain number (.item())
-                # This prevents the "unsupported format string" error
-                last_price_raw = data['Close'].iloc[-1]
-                current_price = float(last_price_raw.item()) if hasattr(last_price_raw, 'item') else float(last_price_raw)
-                
-                local_files = get_local_context()
-                
-                # The Prompt uses your specific answer_style.txt rules
-                prompt = f"""
-                You are a senior stock analyst. 
-                LIVE DATA: {ticker} is currently at ${current_price:.2f}.
-                LOCAL RESEARCH: {local_files}
-                
-                Using the 'Style rules' from answer_style.txt:
-                1. Summarize the technical and fundamental view.
-                2. Give a final conclusion (BUY, HOLD, WAIT, or AVOID) based strictly on my rules.
-                """
-                
-                # Using the lightweight model for speed
-                response = ollama.generate(model='qwen2.5:0.5b', prompt=prompt)
-                st.info(response['response'])
-                
-            except Exception as e:
-                st.error(f"Analysis Error: {e}")
-    elif analyze_btn:
-        st.warning("Please enter a valid ticker first.")
-
-# --- 5. BOTTOM METRICS ---
-if not data.empty:
-    st.divider()
-    m1, m2, m3 = st.columns(3)
-    latest = float(data['Close'].iloc[-1].item())
-    high = float(data['High'].max().item())
-    low = float(data['Low'].min().item())
-    
-    m1.metric("Current Price", f"${latest:.2f}")
-    m2.metric("Period High", f"${high:.2f}")
-    m3.metric("Period Low", f"${low:.2f}")
-    
+  mkdir -p ~/equity_report_bot/{input,output,charts}
+cd ~/equity_report_bot
+apt update
+apt install -y python3-pip python3-venv libpango-1.0-0 libcairo2 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+python3 -m venv venv
+source venv/bin/activate
+python -m pip install -U pip
+pip install yfinance pandas matplotlib jinja2 weasyprint
+ollama pull qwen2.5:3b
 
 
 
@@ -105,111 +19,559 @@ if not data.empty:
 
 
 
+from __future__ import annotations
 
+import json
+import re
+import subprocess
+from pathlib import Path
 
-
-
-
-
-
-
-
-
-import streamlit as st
-import ollama
-import yfinance as yf
-import plotly.graph_objects as go
-import glob
+import matplotlib.pyplot as plt
 import pandas as pd
+import yfinance as yf
+from jinja2 import Template
+from weasyprint import HTML
 
-# --- CONFIG ---
-st.set_page_config(layout="wide", page_title="Screener AI Pro")
 
-# --- DATA ENGINE ---
-def get_clean_context(symbol):
-    context = ""
-    for f_name in glob.glob("*.txt"):
-        try:
-            with open(f_name, 'r', encoding='utf-8') as f:
-                content = f.read()
-                # Only include file if it's a rule file or mentions the ticker
-                if symbol.lower() in content.lower() or "rules" in f_name or "style" in f_name:
-                    context += f"\n-- SOURCE: {f_name} --\n{content}\n"
-        except: continue
-    return context
+BASE_DIR = Path(__file__).resolve().parent
+INPUT_DIR = BASE_DIR / "input"
+OUTPUT_DIR = BASE_DIR / "output"
+CHART_DIR = BASE_DIR / "charts"
 
-# --- UI SIDEBAR ---
-with st.sidebar:
-    st.header("🔍 Stock Screener")
-    ticker = st.text_input("Ticker Symbol", value="NVDA").upper()
-    period = st.selectbox("Timeline", ["1mo", "3mo", "6mo", "1y", "5y"], index=3)
-    run_audit = st.button("🚀 Run AI Audit", use_container_width=True)
-    st.divider()
-    st.caption("Connected to: qwen2.5:0.5b")
+MODEL_NAME = "qwen2.5:3b"   # change to "Reebo" if you want your custom model
 
-# --- DATA FETCH ---
-stock = yf.Ticker(ticker)
-hist = stock.history(period=period)
-info = stock.info
 
-# --- HEADER METRICS ---
-st.title(f"{info.get('longName', ticker)} ({ticker})")
-m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Current Price", f"${hist['Close'].iloc[-1]:.2f}" if not hist.empty else "N/A")
-m2.metric("Market Cap", f"{info.get('marketCap', 0)/1e9:.2f}B" if info.get('marketCap') else "N/A")
-m3.metric("Stock P/E", f"{info.get('trailingPE', 0):.2f}" if info.get('trailingPE') else "N/A")
-m4.metric("ROCE", f"{info.get('returnOnCapitalEmployed', 0)*100:.1f}%" if info.get('returnOnCapitalEmployed') else "N/A")
-m5.metric("Debt to Equity", f"{info.get('debtToEquity', 0)/100:.2f}" if info.get('debtToEquity') else "N/A")
+def read_text_file(path: Path) -> str:
+    return path.read_text(encoding="utf-8", errors="ignore").strip()
 
-st.divider()
 
-# --- MAIN LAYOUT ---
-tab1, tab2 = st.tabs(["📊 Technical Chart", "📋 Financial Health"])
+def fetch_price_chart(ticker: str) -> Path | None:
+    try:
+        df = yf.download(ticker, period="6mo", interval="1d", progress=False)
+        if df.empty:
+            return None
 
-with tab1:
-    col_chart, col_ai = st.columns([2, 1])
-    
-    with col_chart:
-        if not hist.empty:
-            fig = go.Figure(data=[go.Candlestick(
-                x=hist.index, open=hist['Open'], high=hist['High'],
-                low=hist['Low'], close=hist['Close']
-            )])
-            fig.update_layout(template="plotly_dark", height=500, xaxis_rangeslider_visible=False, margin=dict(l=0,r=0,t=0,b=0))
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.error("No data found. Check ticker or internet connection.")
+        out = CHART_DIR / f"{ticker}_price.png"
 
-    with col_ai:
-        st.subheader("🤖 AI Analysis")
-        if run_audit:
-            with st.spinner("Analyzing..."):
-                local_txt = get_clean_context(ticker)
-                prompt = f"""
-                Analyze {ticker}. Current Price: ${hist['Close'].iloc[-1]:.2f}.
+        plt.figure(figsize=(10, 4))
+        plt.plot(df.index, df["Close"])
+        plt.title(f"{ticker} Price Trend")
+        plt.xlabel("Date")
+        plt.ylabel("Close")
+        plt.tight_layout()
+        plt.savefig(out, dpi=180)
+        plt.close()
+        return out
+    except Exception:
+        return None
+
+
+def ask_ollama_for_report(raw_text: str, ticker: str) -> dict:
+    prompt = f"""
+You are a senior equity research analyst.
+
+Convert the following raw research text into ONLY valid JSON.
+
+Required JSON keys:
+- company_name
+- sector
+- date
+- rating
+- cmp
+- target_price
+- market_cap
+- exchange
+- investment_summary
+- sector_overview
+- growth_drivers
+- value_chain
+- beneficiaries
+- company_overview
+- revenue_mix
+- competitive_advantages
+- company_growth_drivers
+- risks
+- valuation
+- disclaimer
+
+Rules:
+- Output ONLY JSON.
+- Use short professional sentences.
+- growth_drivers, competitive_advantages, company_growth_drivers, risks should be arrays.
+- value_chain should be an array of objects with keys: stage, activity, key_metric, capability.
+- beneficiaries should be an array of objects with keys: company, model, status.
+- revenue_mix should be an array of objects with keys: segment, contribution, role, target.
+- risks should be an array of objects with keys: factor, severity, description.
+- valuation should be an object with keys: base_case, bear_case, bull_case, blended_target, rating, upside.
+
+Ticker: {ticker}
+
+RAW RESEARCH TEXT:
+{raw_text}
+""".strip()
+
+    result = subprocess.run(
+        ["ollama", "run", MODEL_NAME],
+        input=prompt.encode("utf-8"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+
+    output = result.stdout.decode("utf-8", errors="ignore").strip()
+
+    # Try to extract JSON even if the model adds extra text
+    match = re.search(r"\{.*\}", output, re.DOTALL)
+    if not match:
+        raise ValueError("Model did not return JSON.")
+
+    return json.loads(match.group(0))
+
+
+def safe_get(data: dict, key: str, default):
+    value = data.get(key, default)
+    return value if value is not None else default
+
+
+def render_html(report: dict, ticker: str, chart_path: Path | None) -> str:
+    chart_rel = chart_path.name if chart_path else ""
+
+    template = Template(
+        r"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+@page {
+  size: A4;
+  margin: 16mm 14mm 18mm 14mm;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  color: #111;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0;
+}
+
+.page-break {
+  page-break-after: always;
+}
+
+.header-bar {
+  background: #0b2d5b;
+  color: white;
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand {
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-size: 16px;
+}
+
+.subbrand {
+  font-size: 10px;
+  opacity: 0.95;
+}
+
+.badge {
+  background: #d9a441;
+  color: #111;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 4px;
+  text-align: center;
+  min-width: 120px;
+}
+
+.container {
+  padding: 18px;
+}
+
+.title {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 10px 0 2px 0;
+}
+
+.subtitle {
+  color: #555;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin: 16px 0 20px 0;
+}
+
+.card {
+  border: 1px solid #d9e1ee;
+  background: #f7f9fc;
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 82px;
+}
+
+.card .label {
+  font-size: 9px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.card .value {
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.section {
+  margin: 16px 0 18px 0;
+}
+
+.section h2 {
+  font-size: 18px;
+  margin: 0 0 8px 0;
+  color: #0b2d5b;
+}
+
+.section h3 {
+  font-size: 14px;
+  margin: 12px 0 6px 0;
+  color: #1a1a1a;
+}
+
+p {
+  margin: 0 0 10px 0;
+  font-size: 11px;
+}
+
+ul, ol {
+  margin: 0 0 10px 18px;
+  padding: 0;
+  font-size: 11px;
+}
+
+li {
+  margin-bottom: 5px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 14px 0;
+  font-size: 10px;
+}
+
+.table th, .table td {
+  border: 1px solid #cfd8e6;
+  padding: 7px 8px;
+  vertical-align: top;
+}
+
+.table th {
+  background: #0b2d5b;
+  color: white;
+  text-align: left;
+}
+
+.table tr:nth-child(even) td {
+  background: #f7f9fc;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 16px;
+}
+
+.note {
+  background: #f4f7fb;
+  border-left: 4px solid #0b2d5b;
+  padding: 10px 12px;
+  font-size: 11px;
+}
+
+.footer {
+  font-size: 9px;
+  color: #666;
+  border-top: 1px solid #ddd;
+  padding-top: 8px;
+  margin-top: 12px;
+}
+
+.disclaimer {
+  font-size: 9px;
+  color: #444;
+}
+
+.chart {
+  width: 100%;
+  margin-top: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.small {
+  font-size: 10px;
+}
+
+.risk-high { color: #b00020; font-weight: 700; }
+.risk-medium { color: #b36b00; font-weight: 700; }
+.risk-low { color: #0a6b2b; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div>
+    <div class="brand">MERIDIAN EQUITY RESEARCH</div>
+    <div class="subbrand">INITIATING COVERAGE | {{ report.sector | default("SECTOR") }}</div>
+  </div>
+  <div class="badge">
+    {{ report.rating | default("BUY") }}<br>
+    Target: {{ report.target_price | default("N/A") }}
+  </div>
+</div>
+
+<div class="container">
+  <div class="title">{{ report.company_name | default(ticker) }}</div>
+  <div class="subtitle">
+    {{ report.subtitle | default("Equity Research Report") }} | Date: {{ report.date | default("April 2025") }}
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="label">Rating</div><div class="value">{{ report.rating | default("BUY") }}</div></div>
+    <div class="card"><div class="label">CMP</div><div class="value">{{ report.cmp | default("N/A") }}</div></div>
+    <div class="card"><div class="label">Target Price</div><div class="value">{{ report.target_price | default("N/A") }}</div></div>
+    <div class="card"><div class="label">Market Cap</div><div class="value">{{ report.market_cap | default("N/A") }}</div></div>
+    <div class="card"><div class="label">Exchange</div><div class="value">{{ report.exchange | default("N/A") }}</div></div>
+  </div>
+
+  <div class="section">
+    <h2>Investment Summary</h2>
+    <p>{{ report.investment_summary | default("No summary available.") }}</p>
+  </div>
+
+  {% if chart_path %}
+  <div class="section">
+    <h2>Price Action Chart</h2>
+    <img class="chart" src="{{ chart_path }}" alt="Price chart">
+  </div>
+  {% endif %}
+
+  <div class="page-break"></div>
+
+  <div class="section">
+    <h2>1. Sector Overview</h2>
+    <p>{{ report.sector_overview | default("No sector overview available.") }}</p>
+    <h3>Growth Drivers</h3>
+    <ul>
+      {% for item in report.growth_drivers | default([]) %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>2. Managed Office / Value Chain Analysis</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Stage</th>
+          <th>Activity</th>
+          <th>Key Metric</th>
+          <th>Capability</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in report.value_chain | default([]) %}
+        <tr>
+          <td>{{ row.stage }}</td>
+          <td>{{ row.activity }}</td>
+          <td>{{ row.key_metric }}</td>
+          <td>{{ row.capability }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>3. Sector Beneficiaries</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Model</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in report.beneficiaries | default([]) %}
+        <tr>
+          <td>{{ row.company }}</td>
+          <td>{{ row.model }}</td>
+          <td>{{ row.status }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>4. Deep-Dive: Company Overview</h2>
+    <p>{{ report.company_overview | default("No company overview available.") }}</p>
+
+    <h3>Revenue Mix</h3>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Segment</th>
+          <th>Contribution</th>
+          <th>Role</th>
+          <th>Target</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in report.revenue_mix | default([]) %}
+        <tr>
+          <td>{{ row.segment }}</td>
+          <td>{{ row.contribution }}</td>
+          <td>{{ row.role }}</td>
+          <td>{{ row.target }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+
+    <h3>Competitive Advantages</h3>
+    <ul>
+      {% for item in report.competitive_advantages | default([]) %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+
+    <h3>Growth Drivers</h3>
+    <ul>
+      {% for item in report.company_growth_drivers | default([]) %}
+      <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="section">
+    <h2>5. Risk Analysis</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Factor</th>
+          <th>Severity</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in report.risks | default([]) %}
+        <tr>
+          <td>{{ row.factor }}</td>
+          <td>{{ row.severity }}</td>
+          <td>{{ row.description }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>6. Investment Thesis & Valuation</h2>
+    <div class="note">
+      <div><b>Base Case:</b> {{ report.valuation.base_case | default("N/A") }}</div>
+      <div><b>Bear Case:</b> {{ report.valuation.bear_case | default("N/A") }}</div>
+      <div><b>Bull Case:</b> {{ report.valuation.bull_case | default("N/A") }}</div>
+      <div><b>Blended Target:</b> {{ report.valuation.blended_target | default("N/A") }}</div>
+      <div><b>Rating:</b> {{ report.valuation.rating | default(report.rating | default("BUY")) }}</div>
+      <div><b>Upside:</b> {{ report.valuation.upside | default("N/A") }}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Disclaimer</h2>
+    <p class="disclaimer">{{ report.disclaimer | default("This report is for informational purposes only.") }}</p>
+  </div>
+
+  <div class="footer">
+    {{ report.company_name | default(ticker) }} | Generated by your local AI pipeline
+  </div>
+</div>
+
+</body>
+</html>
+        """
+    )
+
+    return template.render(
+        report=report,
+        ticker=ticker,
+        chart_path=chart_rel if chart_rel else None,
+    )
+
+
+def main():
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    CHART_DIR.mkdir(exist_ok=True)
+
+    ticker = input("Enter stock ticker (example: EFC.NS or NVDA): ").strip()
+    raw_file = input("Raw text file [input/raw.txt]: ").strip() or "input/raw.txt"
+
+    raw_path = BASE_DIR / raw_file
+    raw_text = read_text_file(raw_path)
+
+    chart_path = fetch_price_chart(ticker)
+
+    report = ask_ollama_for_report(raw_text, ticker)
+
+    # Basic safety defaults
+    report.setdefault("company_name", ticker)
+    report.setdefault("sector", "Equity Research")
+    report.setdefault("date", "April 2025")
+    report.setdefault("rating", "BUY")
+    report.setdefault("cmp", "N/A")
+    report.setdefault("target_price", "N/A")
+    report.setdefault("market_cap", "N/A")
+    report.setdefault("exchange", "N/A")
+    report.setdefault("investment_summary", "")
+    report.setdefault("sector_overview", "")
+    report.setdefault("growth_drivers", [])
+    report.setdefault("value_chain", [])
+    report.setdefault("beneficiaries", [])
+    report.setdefault("company_overview", "")
+    report.setdefault("revenue_mix", [])
+    report.setdefault("competitive_advantages", [])
+    report.setdefault("company_growth_drivers", [])
+    report.setdefault("risks", [])
+    report.setdefault("valuation", {})
+    report.setdefault("disclaimer", "This report is generated for informational purposes only.")
+
+    html = render_html(report, ticker, chart_path)
+
+    html_path = OUTPUT_DIR / f"{ticker}_equity_report.html"
+    pdf_path = OUTPUT_DIR / f"{ticker}_equity_report.pdf"
+
+    html_path.write_text(html, encoding="utf-8")
+    HTML(string=html, base_url=str(BASE_DIR)).write_pdf(str(pdf_path))
+
+    print(f"\nDone.\nHTML: {html_path}\nPDF:  {pdf_path}\n")
+
+
+if __name__ == "__main__":
+    main()
                 
-                METRICS:
-                - P/E: {info.get('trailingPE')}
-                - Market Cap: {info.get('marketCap')}
-                - Business: {info.get('longBusinessSummary', 'N/A')[:500]}...
-                
-                LOCAL CONTEXT:
-                {local_txt}
-                
-                TASK:
-                1. Provide a Summary. 
-                2. Technical & Fundamental View.
-                3. Final Verdict (BUY/HOLD/WAIT/AVOID) based on 'answer_style.txt' rules.
-                """
-                res = ollama.generate(model='qwen2.5:0.5b', prompt=prompt)
-                st.info(res['response'])
-        else:
-            st.write("Click 'Run AI Audit' to see insights.")
-
-with tab2:
-    st.subheader("Key Statistics")
-    # Clean up info dictionary for display
-    display_keys = ['profitMargins', 'forwardEps', 'dividendYield', 'totalRevenue', 'grossMargins', 'operatingMargins']
-    stats_data = {k: info.get(k, 'N/A') for k in display_keys}
-    st.table(pd.DataFrame([stats_data]))
-    
