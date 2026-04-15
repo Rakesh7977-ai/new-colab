@@ -666,3 +666,90 @@ def main():
 if __name__ == "__main__":
     main()
                 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import yfinance as yf
+import matplotlib.pyplot as plt
+import ollama
+from jinja2 import Template
+from weasyprint import HTML
+
+# 1. FETCH & PLOT STOCK DATA (The "Chart Reading" part)
+ticker = "543965.BO" # EFC (I) Limited
+df = yf.download(ticker, period="1y")
+plt.figure(figsize=(10, 4))
+plt.plot(df['Close'], color='#004080', linewidth=2) # Professional Blue
+plt.fill_between(df.index, df['Close'], color='#e6f2ff')
+plt.title("Price Action - 12 Months", fontsize=12, fontweight='bold')
+plt.savefig("stock_plot.png", bbox_inches='tight', dpi=300)
+
+# 2. AI ANALYSIS (The "Model Summary" part)
+with open("data.txt", "r") as f:
+    raw_data = f.read()
+
+prompt = f"Act as a Senior Equity Analyst. Based on this data: {raw_data}. Provide a 3-sentence Investment Verdict (BUY/HOLD) and 3 key Growth Drivers."
+res = ollama.generate(model='qwen2.5:0.5b', prompt=prompt)
+ai_summary = res['response']
+
+# 3. PROFESSIONAL PDF GENERATION (Margins, Colors, Fonts)
+html_template = """
+<html>
+<head><style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: 'Helvetica', 'Arial', sans-serif; color: #333; line-height: 1.5; }
+    .header { border-bottom: 4px solid #004080; padding-bottom: 10px; margin-bottom: 30px; }
+    .title { color: #004080; font-size: 28px; font-weight: bold; text-transform: uppercase; }
+    .rating-badge { background: #004080; color: white; padding: 10px 20px; display: inline-block; font-weight: bold; margin-top: 10px; }
+    .section-title { color: #004080; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; font-size: 16px; }
+    .chart-img { width: 100%; margin-top: 20px; border: 1px solid #eee; }
+</style></head>
+<body>
+    <div class="header">
+        <div class="title">Equity Research Report</div>
+        <div class="rating-badge">BUY | TARGET: INR 285</div>
+    </div>
+    
+    <div class="section-title">AI Analyst Summary & Verdict</div>
+    <p>{{ summary }}</p>
+
+    <div class="section-title">Technical Performance (BSE)</div>
+    <img src="stock_plot.png" class="chart-img">
+
+    <div class="section-title">Core Business Analysis</div>
+    <p style="font-size: 12px; color: #666;">{{ raw_text }}</p>
+</body>
+</html>
+"""
+
+# Render and Export
+t = Template(html_template)
+rendered_html = t.render(summary=ai_summary, raw_text=raw_data[:800])
+HTML(string=rendered_html, base_url=".").write_pdf("Professional_Stock_Report.pdf")
+print("✅ Report Generated: Professional_Stock_Report.pdf")
