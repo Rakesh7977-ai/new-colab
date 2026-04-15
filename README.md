@@ -1,270 +1,4 @@
-  mkdir -p ~/equity_report_bot/{input,output,charts}
-cd ~/equity_report_bot
-apt update
-apt install -y python3-pip python3-venv libpango-1.0-0 libcairo2 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
-python3 -m venv venv
-source venv/bin/activate
-python -m pip install -U pip
-pip install yfinance pandas matplotlib jinja2 weasyprint
-ollama pull qwen2.5:3b
-
-
-### **1. Sector Overview: The Rise of Managed Office Spaces in India**
-
-The Indian commercial real estate landscape is undergoing a massive shift from traditional long-term leases to **flexible, managed office solutions** [1, 2]. As of December 2023, India’s total commercial office stock stood at **832 million square feet**, with flexible workspaces occupying approximately **65 million square feet** or over **1,000,000 seats** [3-5]. Co-working and managed offices now account for roughly **20% of total office space absorption** in major Indian cities [3, 5]. The market is moving toward **"Real Estate as a Service" (RaaS)**, where clients prioritize speed, customization, and the elimination of upfront capital expenditure [6-8]. The industry is expected to reach a market value of **$9 billion by 2028**, driven by a transition from fragmented, unorganized vendors to professional, integrated operators [9, 10].
-
-### **2. Growth Drivers of the Sector**
-
-*   **Global Capability Centers (GCCs):** GCCs are a primary demand driver, expected to comprise **35–40% of total office space absorption** as multinational firms establish strategic hubs in India [11, 12].
-*   **Hybrid Work and Recalibration:** Corporate real estate strategies are shifting toward dynamic, tech-enabled environments to support hybrid work models [1].
-*   **Capex-Light Preferences:** Large enterprises and startups alike are moving toward managed spaces to avoid the heavy costs of interior fit-outs and infrastructure management, which the operator now absorbs [13-15].
-*   **Tier 2 Expansion:** High growth in Tier 2 cities is creating a new frontier for expansion as businesses follow the talent pool outside of major metros [16-18].
-*   **Formalization of the Value Chain:** Clients now seek single-point partners who can handle everything from design to daily facility operations [8, 19].
-
-### **3. Managed Office (RaaS) Value Chain Analysis**
-
-The RaaS value chain is more complex than traditional real estate leasing, involving multiple integrated stages:
-1.  **Property Acquisition:** Identifying high-potential Grade A and Grade B properties in core micro-markets [3, 20].
-2.  **Design and Build (D&B):** Rapidly transforming bare-shell spaces into functional, aesthetically striking offices [21-23].
-3.  **Infrastructure & Furniture:** Manufacturing and installing modular, ergonomic workstations and MEP (mechanical, electrical, plumbing) systems [10, 24, 25].
-4.  **Sales and Onboarding:** Targeting high-quality enterprise clients to secure **90%+ occupancy** before or shortly after a site goes live [22, 26, 27].
-5.  **Facility Management:** Ongoing maintenance, IT support, housekeeping, and community management [28-30].
-6.  **Monetization & Capital Recycling:** Leveraging financial vehicles like **SM REITs** and **AIFs** to exit operational assets and reinvest capital into new developments [31-33].
-
-### **4. Beneficiaries Across the Value Chain**
-
-*   **EFC (I) Limited:** The primary beneficiary of vertical integration, controlling the entire lifecycle from furniture manufacturing to asset management [6, 34, 35].
-*   **Awfis Space Solutions:** A major peer that focuses on an asset-light, **Managed Aggregation (MA)** model to scale rapidly across multiple cities [36-38].
-*   **WeWork India:** A high-brand equity player that has recently attracted interest from marquee institutional investors despite being loss-making [39, 40].
-*   **Specialized Contractors:** Firms like **Whitehills Interior** (subsidiary of EFC) that benefit from the booming interior fit-out market, growing at an **18% CAGR** [41-43].
-
----
-
-### **5. Deep-Dive: Investment Thesis – EFC (I) Limited**
-
-#### **Business Understanding**
-EFC (I) Limited is India’s first listed integrated managed office provider, operating under a **"Real Estate as a Service"** model [6, 23, 44]. The company provides end-to-end solutions, including property identification, customized interior design, furniture manufacturing, and facility management [23]. 
-
-**Revenue Mix and Business Segments (FY 2024-25):**
-*   **Managed Office / Rental:** Contributed **56.7%** of revenue, serving as the stable, annuity-led growth engine [45, 46].
-*   **Design and Build (D&B):** Contributed **40.1%** of revenue, acting as an independent profit center for external corporate clients [46, 47].
-*   **Furniture Manufacturing:** Contributed **3.2%** of revenue (scaling stage), with a target turnover of **₹250–300 crore** by FY26 [46, 48].
-
-#### **Competitive Advantage**
-*   **Vertical Integration:** Unlike peers who outsource fit-outs, EFC owns **Whitehills Interior** (D&B) and **Ek Design** (Furniture), allowing them to retain margins that typically leak to external vendors [49-51].
-*   **Cost Efficiency:** EFC develops office space at approximately **₹1,250 per square foot**, maintaining a capex of roughly **₹50,000 per seat** [52-54].
-*   **Enterprise Focus:** **70% of EFC’s clients require more than 100 seats**, leading to stable 3-to-5-year contracts and a low **churn rate of 4-5%** [26, 55, 56].
-*   **In-House Execution:** The company can complete a **100,000 sq. ft. facility in 62 days**, a speed of execution that serves as a major entry barrier [23, 57].
-
-#### **Growth Drivers**
-*   **Aggressive Capacity Expansion:** Targeting **92,000 to 96,000 seats by March 2026**, up from 47,000 in mid-2024 [23, 58, 59].
-*   **Monetization through SM REIT:** Registration of the **EMBERSTONE SM REIT** allows the company to monetize operational centers, recycling capital without heavy equity dilution [33, 60, 61].
-*   **Diversification:** Foraying into **retail leasing** and constructing a **5 MW data center** ("renting space to machines") [62-64].
-*   **New Revenue Streams:** The furniture division's launch of the premium **mirové** brand and export plans to the Middle East [24, 65].
-
-#### **Risks**
-*   **Internal Control Lapses:** Auditors issued a **"Disclaimer of Opinion"** for FY24 and FY25 regarding the effectiveness of internal financial controls [Section Red Flags].
-*   **Equity Dilution:** Promoter holding has dropped from **~67% to 45.55%** due to frequent preferential allotments to fund growth [Section Red Flags, 555].
-*   **Client Concentration:** The top 10 clients contribute approximately **50% of total revenue**, creating vulnerability to specific sector downturns like IT [66, 67].
-*   **Asset-Liability Mismatch:** Risks inherent in signing **9-year fixed leases** with landlords while clients sign **3-year lock-ins** [68-70].
-
----
-
-### **Investment Thesis Summary**
-**Why invest in EFC (I) Limited?**
-Investors should track EFC because it is one of the **only consistently profitable players** in the listed co-working universe [3, 71]. Its **vertical integration** provides a structural margin advantage of **10% over peers**, as it captures profits at the design, manufacturing, and operational stages [35, 49, 72]. 
-
-The company is transitioning from a "Managed Office Operator" to a **"Capital Allocator and Asset Manager"** through its SM REIT and AIF structures, which will allow it to scale its Area Under Management (AUM) without the historical burden of high debt or equity dilution [61, 73, 74]. With a **312% increase in sales** in FY24 and a clear path to doubling its seat capacity, EFC is a high-growth "India Story" play on the formalization of the commercial workspace [23, 75].
-
-**Forward-Looking Outlook:** As the furniture vertical reaches **70-80% capacity utilization** and the REIT provides a mechanism for capital recycling, the company aims for a **balanced 33% revenue contribution** from each of its three verticals, creating a diversified and resilient RaaS ecosystem [76-78].
-
-Based on the above information kindly prepare a pdf which should look like an equity research report
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-from __future__ import annotations
-
-import json
-import re
-import subprocess
-from pathlib import Path
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import yfinance as yf
-from jinja2 import Template
-from weasyprint import HTML
-
-
-BASE_DIR = Path(__file__).resolve().parent
-INPUT_DIR = BASE_DIR / "input"
-OUTPUT_DIR = BASE_DIR / "output"
-CHART_DIR = BASE_DIR / "charts"
-
-MODEL_NAME = "qwen2.5:3b"   # change to "Reebo" if you want your custom model
-
-
-def read_text_file(path: Path) -> str:
-    return path.read_text(encoding="utf-8", errors="ignore").strip()
-
-
-def fetch_price_chart(ticker: str) -> Path | None:
-    try:
-        df = yf.download(ticker, period="6mo", interval="1d", progress=False)
-        if df.empty:
-            return None
-
-        out = CHART_DIR / f"{ticker}_price.png"
-
-        plt.figure(figsize=(10, 4))
-        plt.plot(df.index, df["Close"])
-        plt.title(f"{ticker} Price Trend")
-        plt.xlabel("Date")
-        plt.ylabel("Close")
-        plt.tight_layout()
-        plt.savefig(out, dpi=180)
-        plt.close()
-        return out
-    except Exception:
-        return None
-
-
-def ask_ollama_for_report(raw_text: str, ticker: str) -> dict:
-    prompt = f"""
-You are a senior equity research analyst.
-
-Convert the following raw research text into ONLY valid JSON.
-
-Required JSON keys:
-- company_name
-- sector
-- date
-- rating
-- cmp
-- target_price
-- market_cap
-- exchange
-- investment_summary
-- sector_overview
-- growth_drivers
-- value_chain
-- beneficiaries
-- company_overview
-- revenue_mix
-- competitive_advantages
-- company_growth_drivers
-- risks
-- valuation
-- disclaimer
-
-Rules:
-- Output ONLY JSON.
-- Use short professional sentences.
-- growth_drivers, competitive_advantages, company_growth_drivers, risks should be arrays.
-- value_chain should be an array of objects with keys: stage, activity, key_metric, capability.
-- beneficiaries should be an array of objects with keys: company, model, status.
-- revenue_mix should be an array of objects with keys: segment, contribution, role, target.
-- risks should be an array of objects with keys: factor, severity, description.
-- valuation should be an object with keys: base_case, bear_case, bull_case, blended_target, rating, upside.
-
-Ticker: {ticker}
-
-RAW RESEARCH TEXT:
-{raw_text}
-""".strip()
-
-    result = subprocess.run(
-        ["ollama", "run", MODEL_NAME],
-        input=prompt.encode("utf-8"),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-
-    output = result.stdout.decode("utf-8", errors="ignore").strip()
-
-    # Try to extract JSON even if the model adds extra text
-    match = re.search(r"\{.*\}", output, re.DOTALL)
-    if not match:
-        raise ValueError("Model did not return JSON.")
-
-    return json.loads(match.group(0))
-
-
-def safe_get(data: dict, key: str, default):
-    value = data.get(key, default)
-    return value if value is not None else default
-
-
-def render_html(report: dict, ticker: str, chart_path: Path | None) -> str:
-    chart_rel = chart_path.name if chart_path else ""
-
-    template = Template(
-        r"""
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-@page {
-  size: A4;
-  margin: 16mm 14mm 18mm 14mm;
-}
-
-body {
-  font-family: Arial, Helvetica, sans-serif;
-  color: #111;
-  line-height: 1.45;
-  margin: 0;
-  padding: 0;
-}
-
-.page-break {
-  page-break-after: always;
-}
-
-.header-bar {
-  background: #0b2d5b;
-  color: white;
-  padding: 14px 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand {
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  font-size: 16px;
-}
+  }
 
 .subbrand {
   font-size: 10px;
@@ -753,3 +487,104 @@ t = Template(html_template)
 rendered_html = t.render(summary=ai_summary, raw_text=raw_data[:800])
 HTML(string=rendered_html, base_url=".").write_pdf("Professional_Stock_Report.pdf")
 print("✅ Report Generated: Professional_Stock_Report.pdf")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import yfinance as yf
+import matplotlib.pyplot as plt
+import ollama
+from jinja2 import Template
+from weasyprint import HTML
+import os
+
+# --- 1. CONFIGURATION & LIVE DATA ---
+TICKER = "543965.BO"  # EFC (I) Limited on BSE
+REPORT_TITLE = "Meridian Equity Research"
+PRIMARY_COLOR = "#004080"  # Professional Blue from sample
+
+# Fetch Live Stock Data and Generate Chart
+print("Fetching live market data...")
+df = yf.download(TICKER, period="1y")
+plt.figure(figsize=(10, 4))
+plt.plot(df['Close'], color=PRIMARY_COLOR, linewidth=2)
+plt.fill_between(df.index, df['Close'], color='#e6f2ff', alpha=0.5)
+plt.title(f"{TICKER} - 12 Month Performance", fontsize=12, fontweight='bold', color=PRIMARY_COLOR)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+plt.savefig("chart.png", bbox_inches='tight', dpi=300)
+
+# --- 2. AI ANALYSIS ---
+print("Running AI analysis with Ollama...")
+with open("data.txt", "r") as f:
+    research_content = f.read()
+
+prompt = f"Act as a Senior Equity Research Analyst. Based on this data: {research_content}. Summarize into: 1. Investment Verdict, 2. Three Key Growth Drivers, and 3. Risk Warning."
+res = ollama.generate(model='qwen2.5:0.5b', prompt=prompt)
+ai_summary = res['response']
+
+# --- 3. PROFESSIONAL PDF GENERATION ---
+html_template = """
+<html>
+<head><style>
+    @page { size: A4; margin: 2cm; }
+    body { font-family: 'Helvetica', sans-serif; color: #333; line-height: 1.6; }
+    .header { border-bottom: 4px solid #004080; padding-bottom: 10px; margin-bottom: 20px; }
+    .title { color: #004080; font-size: 26px; font-weight: bold; text-transform: uppercase; margin: 0; }
+    .buy-box { background: #e6f2ff; border-left: 6px solid #004080; padding: 15px; margin: 20px 0; }
+    .section-title { color: #004080; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-top: 30px; text-transform: uppercase; font-size: 16px; font-weight: bold; }
+    .chart-container { text-align: center; margin: 20px 0; }
+    .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 10px; color: #999; border-top: 1px solid #eee; padding-top: 5px; }
+</style></head>
+<body>
+    <div class="header">
+        <p style="margin:0; font-weight:bold; color:#666;">INITIATING COVERAGE | INDIA REAL ESTATE</p>
+        <h1 class="title">{{ title }}</h1>
+    </div>
+
+    <div class="buy-box">
+        <h2 style="margin:0; color:#004080;">BUY | Target: INR 285</h2>
+        <p style="margin:5px 0 0 0;"><strong>Company:</strong> EFC (I) Limited (BSE: 543965)</p>
+    </div>
+
+    <div class="section-title">AI Analyst Verdict & Summary</div>
+    <div style="white-space: pre-line;">{{ summary }}</div>
+
+    <div class="section-title">Technical Performance (BSE Chart)</div>
+    <div class="chart-container">
+        <img src="chart.png" style="width: 100%;">
+    </div>
+
+    <div class="section-title">Investment Thesis Highlights</div>
+    <p style="font-size: 12px; color: #444;">{{ raw_data[:1200] }}...</p>
+
+    <div class="footer">For institutional use only. Prepared via Meridian AI Engine.</div>
+</body>
+</html>
+"""
+
+print("Finalizing professional PDF...")
+t = Template(html_template)
+rendered_html = t.render(title=REPORT_TITLE, summary=ai_summary, raw_data=research_content)
+HTML(string=rendered_html, base_url=".").write_pdf("EFC_Professional_Report.pdf")
+
+print("✅ DONE! Open 'EFC_Professional_Report.pdf' to see the result.")
+
